@@ -17,7 +17,13 @@
         "assets": [
           {
             "glob": "**/*",
-            "input": "apps/angular-store/public"
+            "input": "apps/angular-store/public",
+            "output": "."
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/angular-store/src/assets",
+            "output": "assets"
           }
         ],
         "styles": ["apps/angular-store/src/styles.css"]

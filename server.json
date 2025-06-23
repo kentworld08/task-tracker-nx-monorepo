@@ -1,0 +1,19 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Build integration",
+      "completed": false
+    },
+    {
+      "id": 2,
+      "title": "react integration",
+      "completed": false
+    },
+    {
+      "id": 3,
+      "title": "angular integration",
+      "completed": false
+    }
+  ]
+}

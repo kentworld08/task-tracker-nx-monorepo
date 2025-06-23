@@ -6,7 +6,8 @@ tmp
 out-tsc
 
 # dependencies
-node_modules
+node_modules/
+.env
 
 # IDEs and editors
 /.idea
@@ -44,3 +45,6 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 
 .angular
+
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
