@@ -6,7 +6,7 @@ function App() {
   const [tasks, setTasks] = useState([]);
 
   const fetchTasks = async () => {
-    fetch('https://task-tracker-nx-monorepo.onrender.com/tasks')
+    fetch('https://task-tracker-monorepo-web.onrender.com/tasks')
       .then((res) => res.json)
       .then((d) => console.log(d));
   };
