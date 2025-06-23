@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "PORT=${PORT:-4200} npx http-server dist/apps/angular-store/browser -p $PORT -a 0.0.0.0",
+    "start": "PORT=${PORT:-4200} npx http-server dist/apps/angular-store/browser -p $PORT -a 0.0.0.0 --spa",
     "build": "nx build angular-store",
     "serve:api": "json-server --watch server.json --port 3000"
   },
