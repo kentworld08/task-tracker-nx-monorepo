@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "start": "nx serve-static angular-store",
+    "build": "nx build angular-store",
     "serve:api": "json-server --watch server.json --port 3000"
   },
   "private": true,
