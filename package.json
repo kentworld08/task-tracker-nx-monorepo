@@ -5,7 +5,7 @@
   "scripts": {
     "start": "PORT=${PORT:-4200} npx http-server dist/apps/angular-store/browser -p $PORT -a 0.0.0.0 --spa",
     "build": "nx build angular-store",
-    "serve:api": "json-server --watch server.json --port 3000 --middlewares cors-middleware.js"
+    "serve:api": "json-server --watch server.json --port ${PORT:-3000} --middlewares cors-middleware.js"
   },
   "private": true,
   "dependencies": {
@@ -20,7 +20,8 @@
     "react-dom": "^19.0.0",
     "react-web-component": "^2.0.2",
     "rxjs": "~7.8.0",
-    "zone.js": "~0.15.0"
+    "zone.js": "~0.15.0",
+    "json-server": "^1.0.0-beta.3"
   },
   "devDependencies": {
     "@angular-devkit/core": "~20.0.0",
@@ -71,7 +72,6 @@
     "jest-preset-angular": "~14.6.0",
     "jiti": "2.4.2",
     "jsdom": "~22.1.0",
-    "json-server": "^1.0.0-beta.3",
     "nx": "21.2.1",
     "postcss": "^8.4.38",
     "prettier": "^2.6.2",
