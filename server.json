@@ -1,19 +1,28 @@
 {
   "tasks": [
     {
-      "id": 1,
-      "title": "Build integration",
-      "completed": false
+      "id": "2",
+      "text": "Team Standup Meeting",
+      "day": "Jun 21st at 3:15PM",
+      "reminder": false
     },
     {
-      "id": 2,
-      "title": "react integration",
-      "completed": false
+      "id": "4",
+      "text": "Call with Mom",
+      "day": "Jun 23rd at 11:11AM",
+      "reminder": false
     },
     {
-      "id": 3,
-      "title": "angular integration",
-      "completed": false
+      "id": "5",
+      "text": "Gym Workout",
+      "day": "Jun 24th at 7:00AM",
+      "reminder": false
+    },
+    {
+      "id": "548b",
+      "text": "SBSC team meetup",
+      "day": "jun 20th 5:15PM",
+      "reminder": true
     }
   ]
 }

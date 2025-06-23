@@ -5,7 +5,7 @@
   "scripts": {
     "start": "PORT=${PORT:-4200} npx http-server dist/apps/angular-store/browser -p $PORT -a 0.0.0.0 --spa",
     "build": "nx build angular-store",
-    "serve:api": "json-server --watch server.json --port 3000"
+    "serve:api": "json-server --watch server.json --port 3000 --middlewares cors-middleware.js"
   },
   "private": true,
   "dependencies": {
