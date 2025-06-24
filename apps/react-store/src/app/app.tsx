@@ -1,44 +1,142 @@
 // import NxWelcome from './nx-welcome';
 
-import React, { useState, useEffect } from 'react';
+// import { useState, useEffect } from 'react';
+import {
+  MdCheckCircle,
+  MdRadioButtonUnchecked,
+  MdDelete,
+} from 'react-icons/md';
+// import { TaskProps, FetchedDataFromApi } from './components/types';
+import FetchAllTask from './components/Fetch-task-data';
+
+const API_BASE_URL = 'https://task-tracker-nx-monorepo-web-server.onrender.com';
+// const API_BASE_URL = 'http://localhost:3000';
 
 function App() {
-  const [tasks, setTasks] = useState([]);
+  const { tasksdata, loading, error, setError, fetchTasks } =
+    FetchAllTask(API_BASE_URL);
 
-  const fetchTasks = async () => {
-    fetch('https://task-tracker-monorepo-web.onrender.com/tasks')
-      .then((res) => res.json)
-      .then((d) => console.log(d));
+  if (loading) {
+    return <div>Loading tasks...</div>;
+  }
+
+  // Display error message if fetching failed
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
+  }
+
+  // console.log will now only run AFTER data has loaded and is valid
+  // Add a check here before logging the first element
+  if (tasksdata.length > 0) {
+    console.log('First task text:', tasksdata[0].text);
+  } else {
+    console.log('No tasks data available yet.');
+  }
+
+  const toggleReminder = async (id: string) => {
+    console.log('Toggling reminder for ID:', id);
+    const taskToToggle = tasksdata.find((task) => task.id === id);
+
+    if (!taskToToggle) {
+      console.error(`Task with ID ${id} not found for toggling.`);
+      return;
+    }
+
+    // Determine the NEW reminder status
+    const newReminderStatus = !taskToToggle.reminder;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/tasks/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reminder: newReminderStatus }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          `HTTP error! Status: ${response.status}. Message: ${
+            errorData.message || 'Unknown error'
+          }`
+        );
+      }
+      // After successful update on backend, re-fetch all tasks to update UI
+      fetchTasks();
+      console.log(`Reminder for task ${id} toggled successfully.`);
+    } catch (err) {
+      console.error('Failed to toggle reminder:', err);
+      setError(`Failed to update task: ${(err as Error).message}`);
+    }
   };
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  // --- DELETE TASK FUNCTION (sends DELETE request) ---
+  const handleDeleteTask = async (id: string) => {
+    console.log('Deleting task with ID:', id);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/tasks/${id}`, {
+        method: 'DELETE',
+      });
 
-  // const fetchTasks = () => {
-  //   fetch('https://task-tracker-nx-monorepo.onrender.com')
-  //     .then((res) => res.json())
-  //     .then((data) => setTasks(data));
-  // };
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          `HTTP error! Status: ${response.status}. Message: ${
+            errorData.message || 'Unknown error'
+          }`
+        );
+      }
 
-  // useEffect(() => {
-  //   fetchTasks();
-  //   const handleTaskAdded = () => fetchTasks();
-
-  //   window.addEventListener('task-added', handleTaskAdded);
-  //   return () => window.removeEventListener('task-added', handleTaskAdded);
-  // }, []);
-  console.log(tasks);
+      // After successful deletion on backend, re-fetch all tasks to update UI
+      fetchTasks();
+      console.log(`Task ${id} deleted successfully.`);
+    } catch (err) {
+      console.error('Failed to delete task:', err);
+      setError(`Failed to delete task: ${(err as Error).message}`);
+    }
+  };
 
   return (
-    <div>
-      <h1>Task List</h1>
-      <ul>
-        {/* {tasks.map((task) => (
-          <li key={task.id}>{task.title}</li>
-        ))} */}
-      </ul>
-    </div>
+    <ul className="w-full overflow-hidden overflow-y-auto h-52">
+      {tasksdata.length > 0 ? (
+        tasksdata.map((task) => (
+          <li
+            key={task.id}
+            className={` bg-[#f4f4f4] m-[5px] px-[20px] py-[10px]${
+              task.reminder ? 'border-l-4 border-green-500' : ''
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <strong>{task.text}</strong>
+
+              <span
+                className="flex gap-2 items-center cursor-pointer"
+                onClick={() => toggleReminder(task.id)}
+              >
+                <div>
+                  {task.reminder ? (
+                    <MdCheckCircle size={24} color="green" />
+                  ) : (
+                    <MdRadioButtonUnchecked size={24} color="gray" />
+                  )}
+                </div>
+
+                <button
+                  className="bg-none border-none cursor-pointer text-red-500 ml-[10px]"
+                  onClick={() => handleDeleteTask(task.id)}
+                >
+                  <MdDelete size={20} />
+                </button>
+              </span>
+            </div>
+            <p>{task.day}</p>
+          </li>
+        ))
+      ) : (
+        <p>No tasks found.</p>
+      )}
+    </ul>
   );
 }
 

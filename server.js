@@ -2,7 +2,7 @@
 
 // --- Module Imports ---
 const express = require('express');
-const cors = require('cors'); // Handles Cross-Origin Resource Sharing
+const cors = require('cors'); // Handles Cross-Origin Resource Sharing - FIX: Changed 'require' to 'cors'
 const path = require('path'); // For working with file and directory paths
 const fs = require('fs'); // Node.js File System module for reading/writing db.json
 
@@ -14,7 +14,7 @@ const port = process.env.PORT || 3000;
 // --- Middleware Setup ---
 // Enable CORS for all origins. This is essential for your frontend (React app)
 // to make requests to this backend, especially when they are on different domains.
-// In a production environment, you would typically restrict `origin` to your
+// In a production environment, you might want to restrict `origin` to your
 // frontend's specific deployed URL for better security.
 app.use(cors());
 
@@ -28,6 +28,30 @@ app.use(express.json());
 // __dirname refers to the directory where the current script (server.js) is located.
 // This assumes db.json is in the same directory as server.js.
 const dbPath = path.join(__dirname, 'db.json');
+
+// --- NEW: Helper function for atomic file write to prevent corruption during writes ---
+const writeDbFileAtomic = (dataToWrite, res, callback) => {
+  const tempDbPath = dbPath + '.tmp'; // Write to a temporary file first
+  fs.writeFile(tempDbPath, dataToWrite, 'utf8', (writeErr) => {
+    if (writeErr) {
+      console.error('Error writing to temporary db.json:', writeErr);
+      // Respond with 500 if the temp file write fails
+      return res
+        .status(500)
+        .json({ error: 'Failed to write data temporarily' });
+    }
+    // If temp write successful, rename it to the final db.json
+    fs.rename(tempDbPath, dbPath, (renameErr) => {
+      if (renameErr) {
+        console.error('Error renaming temp db.json:', renameErr);
+        // Respond with 500 if the rename fails
+        return res.status(500).json({ error: 'Failed to finalize data write' });
+      }
+      // If both write and rename are successful, call the callback to proceed with response
+      callback();
+    });
+  });
+};
 
 // --- API Routes Definition ---
 
@@ -107,12 +131,8 @@ app.post('/api/todos', (req, res) => {
           : 1;
       db.todos.push(newTodo); // Add the new todo to the array
 
-      fs.writeFile(dbPath, JSON.stringify(db, null, 2), 'utf8', (err) => {
-        if (err) {
-          console.error('Error writing to db.json for POST /api/todos:', err);
-          return res.status(500).json({ error: 'Failed to save new todo.' });
-        }
-        // Respond with the newly created todo item and a 201 Created status
+      // --- UPDATED: Use atomic write helper ---
+      writeDbFileAtomic(JSON.stringify(db, null, 2), res, () => {
         res.status(201).json(newTodo);
       });
     } catch (parseError) {
@@ -158,15 +178,8 @@ app.delete('/api/tasks/:id', (req, res) => {
         .json({ message: `Task with id ${taskId} not found` });
     }
 
-    // Write the updated data (with the task removed) back to db.json
-    fs.writeFile(dbPath, JSON.stringify(db, null, 2), 'utf8', (err) => {
-      if (err) {
-        console.error('Error writing to db.json after DELETE /api/tasks:', err);
-        return res
-          .status(500)
-          .json({ error: 'Failed to save changes after deletion' });
-      }
-      // Respond with a success message
+    // --- UPDATED: Use atomic write helper ---
+    writeDbFileAtomic(JSON.stringify(db, null, 2), res, () => {
       res.json({ message: `Task with id ${taskId} deleted successfully` });
     });
   });
@@ -206,15 +219,8 @@ app.patch('/api/tasks/:id', (req, res) => {
     // Update the task object with the new fields (using spread operator for merging)
     db.tasks[taskIndex] = { ...db.tasks[taskIndex], ...updatedFields };
 
-    // Write the updated data back to db.json
-    fs.writeFile(dbPath, JSON.stringify(db, null, 2), 'utf8', (err) => {
-      if (err) {
-        console.error('Error writing to db.json after PATCH /api/tasks:', err);
-        return res
-          .status(500)
-          .json({ error: 'Failed to save changes after update' });
-      }
-      // Respond with the updated task object
+    // --- UPDATED: Use atomic write helper ---
+    writeDbFileAtomic(JSON.stringify(db, null, 2), res, () => {
       res.json(db.tasks[taskIndex]);
     });
   });
@@ -225,10 +231,10 @@ app.patch('/api/tasks/:id', (req, res) => {
 app.listen(port, () => {
   console.log(`Express server running on port ${port}`);
   console.log(`Access your API:`);
-  console.log(`  - All data: http://localhost:${port}/api/data`);
-  console.log(`  - Todos: http://localhost:${port}/api/todos`);
+  console.log(`All data: http://localhost:${port}/api/data`);
+  console.log(`Todos: http://localhost:${port}/api/todos`);
   console.log(
-    `  - Tasks (for toggle/delete): http://localhost:${port}/api/tasks/:id`
+    `Tasks (for toggle/delete): http://localhost:${port}/api/tasks/:id`
   );
   // Note: These URLs are for local development. On Render, use your service's public URL.
 });
