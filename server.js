@@ -1,152 +1,234 @@
-// In your project's root: server.js
+// server.js - Your Express Backend Application
 
+// --- Module Imports ---
 const express = require('express');
-const cors = require('cors'); // Required for frontend-backend communication if they are on different domains
-const path = require('path');
-const fs = require('fs');
+const cors = require('cors'); // Handles Cross-Origin Resource Sharing
+const path = require('path'); // For working with file and directory paths
+const fs = require('fs'); // Node.js File System module for reading/writing db.json
 
+// --- Express App Initialization ---
 const app = express();
-const port = process.env.PORT || 3000; // Use Render's PORT env var, or 3000 for local testing
+// Use Render's provided PORT environment variable, or default to 3000 for local development
+const port = process.env.PORT || 3000;
 
-// --- MIDDLEWARE ---
-// Enable CORS for all origins. This is crucial for your frontend to talk to your backend.
-// For production, you might want to restrict 'origin' to your frontend's URL.
+// --- Middleware Setup ---
+// Enable CORS for all origins. This is essential for your frontend (React app)
+// to make requests to this backend, especially when they are on different domains.
+// In a production environment, you would typically restrict `origin` to your
+// frontend's specific deployed URL for better security.
 app.use(cors());
 
-// Parse JSON request bodies (for POST, PUT requests)
+// Enable Express to parse JSON formatted request bodies.
+// This is crucial for POST, PUT, and PATCH requests where the client
+// sends JSON data (e.g., when adding a new task or updating reminder status).
 app.use(express.json());
 
-// --- API ROUTES ---
-const dbPath = path.join(__dirname, 'db.json'); // Path to your data file
+// --- Database Path Configuration ---
+// Defines the path to your db.json file.
+// __dirname refers to the directory where the current script (server.js) is located.
+// This assumes db.json is in the same directory as server.js.
+const dbPath = path.join(__dirname, 'db.json');
 
-// Route to get all data (e.g., from your db.json)
+// --- API Routes Definition ---
+
+// 1. GET /api/data
+// Fetches all data from the db.json file. This endpoint returns the entire
+// JSON object, including all top-level arrays like 'tasks' and 'users'.
 app.get('/api/data', (req, res) => {
   fs.readFile(dbPath, 'utf8', (err, data) => {
     if (err) {
-      console.error('Error reading db.json:', err);
-      return res.status(500).send('Error reading data');
+      console.error('Error reading db.json for /api/data:', err);
+      // Respond with a 500 Internal Server Error if file reading fails
+      return res
+        .status(500)
+        .json({ error: 'Failed to read data from database' });
     }
-    res.json(JSON.parse(data));
+    try {
+      // Parse the JSON string into a JavaScript object
+      res.json(JSON.parse(data));
+    } catch (parseError) {
+      console.error('Error parsing db.json for /api/data:', parseError);
+      // Respond with a 500 if JSON parsing fails (e.g., malformed JSON)
+      return res
+        .status(500)
+        .json({ error: 'Database file is corrupted or malformed' });
+    }
   });
 });
 
-// Example: Route to get a specific collection (e.g., /api/todos)
+// 2. GET /api/todos
+// Fetches only the 'todos' array from the db.json file.
+// This route assumes your db.json *might* contain a 'todos' array,
+// separate from 'tasks'.
 app.get('/api/todos', (req, res) => {
   fs.readFile(dbPath, 'utf8', (err, data) => {
     if (err) {
-      console.error('Error reading db.json:', err);
-      return res.status(500).send('Error reading todos');
+      console.error('Error reading db.json for /api/todos:', err);
+      return res.status(500).json({ error: 'Failed to read todos data' });
     }
-    const db = JSON.parse(data);
-    res.json(db.todos || []); // Return the 'todos' array, or empty if not found
+    try {
+      const db = JSON.parse(data);
+      // Return the 'todos' array, or an empty array if 'todos' key doesn't exist
+      res.json(db.todos || []);
+    } catch (parseError) {
+      console.error('Error parsing db.json for /api/todos:', parseError);
+      return res
+        .status(500)
+        .json({ error: 'Database file is corrupted or malformed' });
+    }
   });
 });
 
-// Example: Route to add a new todo (POST request)
+// 3. POST /api/todos
+// Adds a new 'todo' item to the 'todos' array in db.json.
+// This route is separate from tasks and expects a 'title' in the request body.
 app.post('/api/todos', (req, res) => {
   const newTodo = req.body;
-  // Basic validation: Check if newTodo has a title
+  // Basic validation for the new todo item
   if (!newTodo || !newTodo.title) {
-    return res.status(400).send('Todo must have a title.');
+    return res.status(400).json({ message: 'Todo must have a title.' });
   }
 
   fs.readFile(dbPath, 'utf8', (err, data) => {
     if (err) {
-      console.error('Error reading db.json for POST:', err);
-      return res.status(500).send('Error processing request.');
+      console.error('Error reading db.json for POST /api/todos:', err);
+      return res
+        .status(500)
+        .json({ error: 'Error processing todo creation request.' });
     }
-    const db = JSON.parse(data);
-    db.todos = db.todos || []; // Ensure todos array exists
+    try {
+      const db = JSON.parse(data);
+      db.todos = db.todos || []; // Ensure 'todos' array exists
 
-    // Simple ID generation (in a real app, use a DB for this)
-    newTodo.id =
-      db.todos.length > 0 ? Math.max(...db.todos.map((t) => t.id || 0)) + 1 : 1;
-    db.todos.push(newTodo); // Add new todo to the array
+      // Simple ID generation (for real apps, use a database's ID generation)
+      newTodo.id =
+        db.todos.length > 0
+          ? Math.max(...db.todos.map((t) => t.id || 0)) + 1
+          : 1;
+      db.todos.push(newTodo); // Add the new todo to the array
 
-    fs.writeFile(dbPath, JSON.stringify(db, null, 2), 'utf8', (err) => {
-      if (err) {
-        console.error('Error writing to db.json for POST:', err);
-        return res.status(500).send('Error saving data.');
-      }
-      res.status(201).json(newTodo); // Respond with the newly created todo
-    });
+      fs.writeFile(dbPath, JSON.stringify(db, null, 2), 'utf8', (err) => {
+        if (err) {
+          console.error('Error writing to db.json for POST /api/todos:', err);
+          return res.status(500).json({ error: 'Failed to save new todo.' });
+        }
+        // Respond with the newly created todo item and a 201 Created status
+        res.status(201).json(newTodo);
+      });
+    } catch (parseError) {
+      console.error('Error parsing db.json for POST /api/todos:', parseError);
+      return res
+        .status(500)
+        .json({ error: 'Database file is corrupted or malformed' });
+    }
   });
 });
 
-// --- NEW ROUTES FOR TASKS (based on your frontend data structure) ---
-
-// DELETE route for tasks
+// 4. DELETE /api/tasks/:id
+// Deletes a specific task from the 'tasks' array in db.json based on its ID.
 app.delete('/api/tasks/:id', (req, res) => {
-  const taskId = req.params.id; // Task ID will be a string (e.g., "2", "548b")
+  const taskId = req.params.id; // Task ID (expected to be a string)
 
   fs.readFile(dbPath, 'utf8', (err, data) => {
     if (err) {
-      console.error('Error reading db.json:', err);
-      return res.status(500).json({ error: 'Failed to delete task' });
+      console.error('Error reading db.json for DELETE /api/tasks:', err);
+      return res
+        .status(500)
+        .json({ error: 'Failed to read data for deletion' });
     }
-    let db = JSON.parse(data);
+    let db;
+    try {
+      db = JSON.parse(data);
+    } catch (parseError) {
+      console.error('Error parsing db.json for DELETE /api/tasks:', parseError);
+      return res
+        .status(500)
+        .json({ error: 'Database file is corrupted or malformed' });
+    }
 
-    // Ensure db.tasks exists and filter it
+    // Ensure 'tasks' array exists and get its initial length
     const initialLength = db.tasks ? db.tasks.length : 0;
+    // Filter out the task with the matching ID
     db.tasks = (db.tasks || []).filter((task) => task.id !== taskId);
 
     if (db.tasks.length === initialLength) {
-      // If length didn't change, task was not found
-      return res.status(404).json({ message: 'Task not found' });
+      // If the array length didn't change, the task was not found
+      return res
+        .status(404)
+        .json({ message: `Task with id ${taskId} not found` });
     }
 
-    // Write the updated data back to db.json
+    // Write the updated data (with the task removed) back to db.json
     fs.writeFile(dbPath, JSON.stringify(db, null, 2), 'utf8', (err) => {
       if (err) {
-        console.error('Error writing to db.json after delete:', err);
+        console.error('Error writing to db.json after DELETE /api/tasks:', err);
         return res
           .status(500)
           .json({ error: 'Failed to save changes after deletion' });
       }
+      // Respond with a success message
       res.json({ message: `Task with id ${taskId} deleted successfully` });
     });
   });
 });
 
-// PATCH route for updating a task (e.g., toggling reminder)
+// 5. PATCH /api/tasks/:id
+// Updates specific fields of a task in the 'tasks' array (e.g., toggling 'reminder').
 app.patch('/api/tasks/:id', (req, res) => {
   const taskId = req.params.id;
-  const updatedFields = req.body; // Expects { reminder: true/false }
+  const updatedFields = req.body; // Expects an object like { reminder: true/false }
 
   fs.readFile(dbPath, 'utf8', (err, data) => {
     if (err) {
-      console.error('Error reading db.json:', err);
-      return res.status(500).json({ error: 'Failed to update task' });
+      console.error('Error reading db.json for PATCH /api/tasks:', err);
+      return res.status(500).json({ error: 'Failed to read data for update' });
     }
-    const db = JSON.parse(data);
+    let db;
+    try {
+      db = JSON.parse(data);
+    } catch (parseError) {
+      console.error('Error parsing db.json for PATCH /api/tasks:', parseError);
+      return res
+        .status(500)
+        .json({ error: 'Database file is corrupted or malformed' });
+    }
 
-    // Find the task by ID in the tasks array
+    // Find the index of the task to be updated
     const taskIndex = (db.tasks || []).findIndex((task) => task.id === taskId);
 
     if (taskIndex === -1) {
-      return res.status(404).json({ message: 'Task not found' });
+      // If task not found, respond with 404 Not Found
+      return res
+        .status(404)
+        .json({ message: `Task with id ${taskId} not found` });
     }
 
-    // Update the found task with the new fields
+    // Update the task object with the new fields (using spread operator for merging)
     db.tasks[taskIndex] = { ...db.tasks[taskIndex], ...updatedFields };
 
     // Write the updated data back to db.json
     fs.writeFile(dbPath, JSON.stringify(db, null, 2), 'utf8', (err) => {
       if (err) {
-        console.error('Error writing to db.json after patch:', err);
+        console.error('Error writing to db.json after PATCH /api/tasks:', err);
         return res
           .status(500)
           .json({ error: 'Failed to save changes after update' });
       }
-      res.json(db.tasks[taskIndex]); // Respond with the updated task object
+      // Respond with the updated task object
+      res.json(db.tasks[taskIndex]);
     });
   });
 });
 
-// --- START THE SERVER ---
+// --- Server Start ---
+// Starts the Express server and listens for incoming requests on the specified port.
 app.listen(port, () => {
   console.log(`Express server running on port ${port}`);
+  console.log(`Access your API:`);
+  console.log(`  - All data: http://localhost:${port}/api/data`);
+  console.log(`  - Todos: http://localhost:${port}/api/todos`);
   console.log(
-    `Access your API (e.g., for todos) at http://localhost:${port}/api/todos`
+    `  - Tasks (for toggle/delete): http://localhost:${port}/api/tasks/:id`
   );
+  // Note: These URLs are for local development. On Render, use your service's public URL.
 });
