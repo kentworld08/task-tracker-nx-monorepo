@@ -73,6 +73,76 @@ app.post('/api/todos', (req, res) => {
   });
 });
 
+// --- NEW ROUTES FOR TASKS (based on your frontend data structure) ---
+
+// DELETE route for tasks
+app.delete('/api/tasks/:id', (req, res) => {
+  const taskId = req.params.id; // Task ID will be a string (e.g., "2", "548b")
+
+  fs.readFile(dbPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading db.json:', err);
+      return res.status(500).json({ error: 'Failed to delete task' });
+    }
+    let db = JSON.parse(data);
+
+    // Ensure db.tasks exists and filter it
+    const initialLength = db.tasks ? db.tasks.length : 0;
+    db.tasks = (db.tasks || []).filter((task) => task.id !== taskId);
+
+    if (db.tasks.length === initialLength) {
+      // If length didn't change, task was not found
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    // Write the updated data back to db.json
+    fs.writeFile(dbPath, JSON.stringify(db, null, 2), 'utf8', (err) => {
+      if (err) {
+        console.error('Error writing to db.json after delete:', err);
+        return res
+          .status(500)
+          .json({ error: 'Failed to save changes after deletion' });
+      }
+      res.json({ message: `Task with id ${taskId} deleted successfully` });
+    });
+  });
+});
+
+// PATCH route for updating a task (e.g., toggling reminder)
+app.patch('/api/tasks/:id', (req, res) => {
+  const taskId = req.params.id;
+  const updatedFields = req.body; // Expects { reminder: true/false }
+
+  fs.readFile(dbPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading db.json:', err);
+      return res.status(500).json({ error: 'Failed to update task' });
+    }
+    const db = JSON.parse(data);
+
+    // Find the task by ID in the tasks array
+    const taskIndex = (db.tasks || []).findIndex((task) => task.id === taskId);
+
+    if (taskIndex === -1) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+
+    // Update the found task with the new fields
+    db.tasks[taskIndex] = { ...db.tasks[taskIndex], ...updatedFields };
+
+    // Write the updated data back to db.json
+    fs.writeFile(dbPath, JSON.stringify(db, null, 2), 'utf8', (err) => {
+      if (err) {
+        console.error('Error writing to db.json after patch:', err);
+        return res
+          .status(500)
+          .json({ error: 'Failed to save changes after update' });
+      }
+      res.json(db.tasks[taskIndex]); // Respond with the updated task object
+    });
+  });
+});
+
 // --- START THE SERVER ---
 app.listen(port, () => {
   console.log(`Express server running on port ${port}`);
