@@ -6,7 +6,7 @@
     "start": "PORT=${PORT:-4200} npx http-server dist/apps/angular-store/browser -p $PORT -a 0.0.0.0 --spa",
     "build": "nx build angular-store",
     "serve:api": "json-server --watch server.json --port ${PORT:-3000}",
-    "start:backend": "NODE_PATH=./node_modules node server.js"
+    "start:backend": "ls -la node_modules && NODE_PATH=./node_modules node server.js"
   },
   "private": true,
   "dependencies": {
