@@ -112,7 +112,10 @@ function App() {
 
               <span
                 className="flex gap-2 items-center cursor-pointer"
-                onClick={() => toggleReminder(task.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleReminder(task.id);
+                }}
               >
                 <div>
                   {task.reminder ? (
@@ -123,8 +126,13 @@ function App() {
                 </div>
 
                 <button
+                  type="button"
                   className="bg-none border-none cursor-pointer text-red-500 ml-[10px]"
-                  onClick={() => handleDeleteTask(task.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleDeleteTask(task.id);
+                  }}
                 >
                   <MdDelete size={20} />
                 </button>

@@ -144,6 +144,52 @@ app.post('/api/todos', (req, res) => {
   });
 });
 
+// --- NEW: 6. POST /api/tasks ---
+// Adds a new 'task' item to the 'tasks' array in db.json.
+// This route is used by the Angular frontend to submit new tasks.
+app.post('/api/tasks', (req, res) => {
+  const newTask = req.body;
+  // Basic validation: Check if newTask has text and day
+  if (!newTask || !newTask.text || !newTask.day) {
+    return res
+      .status(400)
+      .json({ message: 'New task must have text and day.' });
+  }
+
+  fs.readFile(dbPath, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading db.json for POST /api/tasks:', err);
+      return res
+        .status(500)
+        .json({ error: 'Error processing new task request.' });
+    }
+    try {
+      const db = JSON.parse(data);
+      db.tasks = db.tasks || []; // Ensure tasks array exists
+
+      // Simple ID generation for new tasks (in a real app, use a proper UUID library)
+      // Generates a short alphanumeric ID, less prone to conflicts than simple increments with mixed string/number IDs.
+      newTask.id = Math.random().toString(36).substring(2, 9);
+      // Set default reminder status if not provided in the request body
+      newTask.reminder =
+        newTask.reminder !== undefined ? newTask.reminder : false;
+
+      db.tasks.push(newTask); // Add the new task to the 'tasks' array
+
+      // Use the atomic write helper to save the updated db.json
+      writeDbFileAtomic(JSON.stringify(db, null, 2), res, () => {
+        // Respond with the newly created task object and a 201 Created status
+        res.status(201).json(newTask);
+      });
+    } catch (parseError) {
+      console.error('Error parsing db.json for POST /api/tasks:', parseError);
+      return res
+        .status(500)
+        .json({ error: 'Database file is corrupted or malformed' });
+    }
+  });
+});
+
 // 4. DELETE /api/tasks/:id
 // Deletes a specific task from the 'tasks' array in db.json based on its ID.
 app.delete('/api/tasks/:id', (req, res) => {

@@ -1,4 +1,4 @@
-<form class="mb-[40px]">
+<form class="mb-[40px]" (ngSubmit)="onSubmit()">
   <div class="my-[20px] mx-auto">
     <label for="text" class="block">Task</label>
     <input
@@ -7,6 +7,8 @@
       id="text"
       placeholder="Add Task"
       class="w-full h-[40px] m-[5px] py-[3px] px-[7px] text-[17px] border-[1px] border-black"
+      [(ngModel)]="text"
+      required
     />
   </div>
   <div class="my-[20px] mx-auto">
@@ -17,6 +19,8 @@
       id="day"
       placeholder="Add Day & Time"
       class="w-full h-[40px] m-[5px] py-[3px] px-[7px] text-[17px] border-[1px] border-black"
+      [(ngModel)]="day"
+      required
     />
   </div>
   <div class="my-[20px] mx-auto flex items-center justify-between">
@@ -26,6 +30,7 @@
       name="reminder"
       id="reminder"
       class="flex-2 h-[20px]"
+      [(ngModel)]="reminder"
     />
   </div>
   <button
