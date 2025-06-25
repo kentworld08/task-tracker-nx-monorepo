@@ -20,6 +20,9 @@ const FetchAllTask = (url: string) => {
       // Parse the JSON response. It will be the entire object: { tasks: [...]}
       const data: FetchedDataFromApi = await response.json();
 
+      console.log('API Response data:', data);
+      console.log('Tasks extracted for state:', data.tasks);
+
       setTasksData(data.tasks);
     } catch (err) {
       console.error('Failed to fetch tasks:', err);

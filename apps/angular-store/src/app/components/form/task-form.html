@@ -33,10 +33,10 @@
       [(ngModel)]="reminder"
     />
   </div>
-  <button
+  <input
     type="submit"
     class="inline-block bg-black text-white border-none py-[10px] px-[20px] m-[5px] rounded-[5px] cursor-pointer decoration-0 text-[15px] font-normal w-full hover:opacity-90"
-  >
-    Save Task
-  </button>
+    [value]="isLoading ? 'Loading...': 'Save Task'"
+    [disabled]="isLoading"
+  />
 </form>

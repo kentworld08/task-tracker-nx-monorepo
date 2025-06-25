@@ -8,17 +8,13 @@ import {
 } from 'react-icons/md';
 // import { TaskProps, FetchedDataFromApi } from './components/types';
 import FetchAllTask from './components/Fetch-task-data';
+import { Suspense } from 'react';
 
 const API_BASE_URL = 'https://task-tracker-nx-monorepo-web-server.onrender.com';
-// const API_BASE_URL = 'http://localhost:3000';
 
 function App() {
   const { tasksdata, loading, error, setError, fetchTasks } =
     FetchAllTask(API_BASE_URL);
-
-  if (loading) {
-    return <div>Loading tasks...</div>;
-  }
 
   // Display error message if fetching failed
   if (error) {
@@ -98,53 +94,63 @@ function App() {
   };
 
   return (
-    <ul className="w-full overflow-hidden overflow-y-auto h-52">
-      {tasksdata.length > 0 ? (
-        tasksdata.map((task) => (
-          <li
-            key={task.id}
-            className={` bg-[#f4f4f4] m-[5px] px-[20px] py-[10px]${
-              task.reminder ? 'border-l-4 border-green-500' : ''
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <strong>{task.text}</strong>
-
-              <span
-                className="flex gap-2 items-center cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleReminder(task.id);
-                }}
-              >
-                <div>
-                  {task.reminder ? (
-                    <MdCheckCircle size={24} color="green" />
-                  ) : (
-                    <MdRadioButtonUnchecked size={24} color="gray" />
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  className="bg-none border-none cursor-pointer text-red-500 ml-[10px]"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    handleDeleteTask(task.id);
-                  }}
+    <div className="w-full bg-purple-900 h-screen flex items-center justify-center">
+      <div className="max-w-[500px] my-[30px] mx-auto w-[400px] overflow-auto min-h-[300px] border-[1px] border-[#4682B4] p-[30px] rounded-[5px] max-h-[500px] h-[600px] shadow-sm bg-white">
+        <div>
+          <strong>React Task List</strong>
+        </div>
+        <Suspense fallback={`${loading && <p>Loading...</p>}`}>
+          <ul className="w-full overflow-hidden overflow-y-auto ">
+            {tasksdata.length > 0 ? (
+              tasksdata.map((task) => (
+                <li
+                  key={task.id}
+                  className={` bg-[#f4f4f4] m-[5px] px-[20px] py-[10px]${
+                    task.reminder ? 'border-l-4 border-green-500' : ''
+                  }`}
                 >
-                  <MdDelete size={20} />
-                </button>
-              </span>
-            </div>
-            <p>{task.day}</p>
-          </li>
-        ))
-      ) : (
-        <p>No tasks found.</p>
-      )}
-    </ul>
+                  <div className="flex items-center justify-between">
+                    <strong>{task.text}</strong>
+
+                    <span className="flex gap-2 items-center cursor-pointer">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          toggleReminder(task.id);
+                        }}
+                      >
+                        {task.reminder ? (
+                          <MdCheckCircle size={24} color="green" />
+                        ) : (
+                          <MdRadioButtonUnchecked size={24} color="gray" />
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="bg-none border-none cursor-pointer text-red-500 ml-[10px]"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleDeleteTask(task.id);
+                        }}
+                      >
+                        <MdDelete size={20} />
+                      </button>
+                    </span>
+                  </div>
+                  <p>{task.day}</p>
+                </li>
+              ))
+            ) : (
+              <p>No tasks found.</p>
+            )}
+          </ul>
+        </Suspense>
+      </div>
+    </div>
   );
 }
 

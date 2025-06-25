@@ -1,48 +1,42 @@
-// apps/angular-store/src/app/components/form/task-form.ts
-
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http'; // Still need to import HttpClient for type definition and inject()
+import { HttpClient } from '@angular/common/http'; // Import HttpClient
 
-// Define an interface for your task data, matching the backend's expected structure
 interface Task {
-  id?: string; // Optional, as backend will generate it
+  id?: string;
   text: string;
   day: string;
   reminder: boolean;
 }
 
 @Component({
-  standalone: true, // This component is standalone
-  selector: 'app-form', // Ensure this matches the HTML tag you'll use
-  templateUrl: './task-form.html', // Point to its HTML file
-  styleUrls: ['./task-form.css'], // Point to its CSS file
-  imports: [
-    CommonModule, // For Angular's common directives like ngIf, ngFor
-    FormsModule, // For [(ngModel)] (two-way data binding)
-    // IMPORTANT: HttpClient is NOT imported here. It's provided globally via app.config.ts
-  ],
+  standalone: true,
+  selector: 'app-form',
+  imports: [CommonModule, FormsModule],
+  templateUrl: './task-form.html',
+  styleUrl: './task-form.css',
 })
-export class TaskFormComponent {
-  // Class name matches the file: TaskFormComponent
-  text = ''; // Initialized values (removes ESLint inferrable-types warning)
+export class Form {
+  private http = inject(HttpClient);
+
+  text = '';
   day = '';
   reminder = false;
+  isLoading = false;
 
   private readonly API_BASE_URL =
     'https://task-tracker-nx-monorepo-web-server.onrender.com';
-  // private readonly API_BASE_URL = 'http://localhost:3000'; // Uncomment for local backend testing
-
-  // Use inject() to get the HttpClient instance (configured in app.config.ts)
-  private http = inject(HttpClient);
 
   onSubmit(): void {
+    // Basic client-side validation
     if (!this.text || !this.day) {
       alert('Please add a task and day.');
       return;
     }
+    this.isLoading = true;
 
+    // Create the new task object from the form data
     const newTask: Task = {
       text: this.text,
       day: this.day,
@@ -50,25 +44,34 @@ export class TaskFormComponent {
     };
 
     console.log(
-      'Angular (TaskFormComponent): Attempting to add new task:',
+      'Angular (FormComponent): Attempting to add new task:',
       newTask
     );
 
+    // Send POST request to your backend API
     this.http.post<Task>(`${this.API_BASE_URL}/api/tasks`, newTask).subscribe({
       next: (responseTask) => {
+        // Log success and dispatch the custom event
         console.log(
-          'Angular (TaskFormComponent): Task added successfully!',
+          'Angular (FormComponent): Task added successfully!',
           responseTask
         );
-        window.dispatchEvent(new CustomEvent('task-added')); // Dispatch event for React
+        alert('Task added successfully!');
 
-        // Clear the form fields
+        // --- CRUCIAL FOR CROSS-APP COMMUNICATION ---
+        // Dispatch a custom browser event to notify the React application
+        // that a new task has been added to the backend.
+        window.dispatchEvent(new CustomEvent('task-added'));
+
+        // Clear the form fields after successful submission
         this.text = '';
         this.day = '';
         this.reminder = false;
+        this.isLoading = false;
       },
       error: (error) => {
-        console.error('Angular (TaskFormComponent): Error adding task:', error);
+        // Log and display error if the request fails
+        console.error('Angular (FormComponent): Error adding task:', error);
         alert(`Failed to add task: ${error.message || 'Unknown error'}`);
       },
     });
