@@ -1,82 +1,106 @@
-# AngularNxMonorepo
+Nx Monorepo: Angular, React & Node.js
+This project is an Nx monorepo containing three applications: an Angular host, a React micro-frontend, and a Node.js Express API. It's designed for efficient development and independent deployment of each part.
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+Table of Contents
+Key Features
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is almost ready ✨.
+Local Setup
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+Deployment Guide
 
-## Finish your CI setup
+Contributing
 
-[Click here to finish setting up your workspace!](https://cloud.nx.app/connect/nlgE8fbCv8)
+License
 
+Key Features
+Unified Development: Manage Angular, React, and Node.js projects from a single repository using Nx Monorepo.
 
-## Run tasks
+Angular Host (angular-store): A standalone Angular app for task submission, featuring a loading button and custom alerts.
 
-To run the dev server for your app, use:
+React Micro-frontend (react-store): A standalone React app displaying tasks with live updates (polling every 15 seconds) and interaction (toggle/delete).
 
-```sh
-npx nx serve angular-store
-```
+Node.js Backend (task-api): A simple REST API for managing tasks.
 
-To create a production bundle:
+Seamless Communication: Angular and React apps communicate via browser events (task-added) for instant UI updates.
 
-```sh
-npx nx build angular-store
-```
+Independent Deployment: Each frontend application can be deployed separately, while sharing the same backend.
 
-To see all available targets to run for a project, run:
+Local Setup
+Prerequisites
+Ensure Node.js (LTS), npm/Yarn/pnpm, and Git are installed.
 
-```sh
-npx nx show project angular-store
-```
+Getting Started
+Clone the repository:
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+git clone <your-repository-url>
+cd angular-nx-monorepo
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Install dependencies (using pnpm is recommended):
 
-## Add new projects
+pnpm install
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+# or npm install / yarn install
 
-Use the plugin's generator to create new projects.
+Run applications locally:
 
-To generate a new application, use:
+Backend API: npx nx serve task-api (runs on http://localhost:3000)
 
-```sh
-npx nx g @nx/angular:app demo
-```
+Angular App: npx nx serve angular-store (runs on http://localhost:4200)
 
-To generate a new library, use:
+React App: npx nx serve react-store (runs on http://localhost:4201)
 
-```sh
-npx nx g @nx/angular:lib mylib
-```
+# Deployment Guide
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+This project is set up for Vercel for frontends and Render.com for the backend.
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Strategy
+The backend API is deployed separately (e.g., Render.com). Both Angular and React frontends are deployed as distinct projects on Vercel from this single monorepo, with each pointing to your live backend API.
 
+Steps
+Prepare & Deploy Backend API (Render.com):
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Commit all code to GitHub.
 
-## Install Nx Console
+Deploy your apps/task-api to Render.com (or your chosen cloud provider).
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+Crucially, obtain your live backend API URL (e.g., https://your-api.onrender.com).
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Deploy Angular Host (angular-store) to Vercel:
 
-## Useful links
+Go to Vercel Dashboard -> Add New Project.
 
-Learn more:
+Import your angular-nx-monorepo GitHub repository.
 
-- [Learn more about this workspace setup](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Configure Project:
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Root Directory: apps/angular-store
+
+Build Command: npx nx build angular-store --prod
+
+Output Directory: dist/apps/angular-store
+
+Environment Variable: Add API_BASE_URL with your live backend API URL.
+
+Click "Deploy".
+
+Deploy React Micro-frontend (react-store) to Vercel:
+
+Repeat the Vercel "Add New Project" process, importing the same GitHub repository.
+
+Configure Project:
+
+Root Directory: apps/react-store
+
+Build Command: npx nx build react-store --prod
+
+Output Directory: dist/apps/react-store
+
+Environment Variable: Add API_BASE_URL (or REACT_APP_API_BASE_URL) with your live backend API URL.
+
+Click "Deploy".
+
+Contributing
+Fork, improve, and submit pull requests!
+
+License
+MIT License
